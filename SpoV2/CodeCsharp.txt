@@ -2,6 +2,6 @@ int[] fibNumbers = new int[] { 0, 1, 1, 2};
 int sum = 0;
 foreach (int element in fibNumbers)
 {
-    sum += element;
+    sum += element * 2 + (5 / element);
 }
 

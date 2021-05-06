@@ -250,14 +250,6 @@ namespace SpoV2
                                     }
                                 }
                             }
-                            //else
-                            //{
-                            //    List<Token> list = tokenList.ToList<Token>();
-                            //    Token t = list.Find(item => item.name == subString);
-                            //    if (t.name != null)
-                            //        PushToken(t.name, t.type, t.val);
-
-                            //}
                         }
                         if (IsKeyWord(DelSpc(subString)))
                         {
@@ -320,6 +312,7 @@ namespace SpoV2
             la.GetTokens(codeText);
 
             LinkedList<Token> tlist = la.tokenList;
+
             la.PrintList(tlist);
 
             Console.WriteLine("");
