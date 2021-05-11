@@ -101,8 +101,9 @@ namespace SpoV2
             Token tkn;
             int n = tkns.Count;
             for (int i = 0; i < n; i++)
-            {
-                tkn = PopToken();
+            {                
+                tkn = tkns.Last.Value;
+                tkns.RemoveLast();
                 Console.WriteLine($"Name: {tkn.name}, Type: {tkn.type}, Value: {tkn.val}\n");
             }
         }
@@ -225,6 +226,7 @@ namespace SpoV2
                                 int stopCount = i;
                                 while (true)
                                 {
+                                    //GetVarArg:
                                     if (code[i] == '=')
                                     {
                                         i++;
@@ -277,8 +279,40 @@ namespace SpoV2
                             Token t = list.Find(item => item.name == subString);
                             if (t.name != null)
                             {
-                                PushToken(t.name, t.type, t.val);
+                                //PushToken(t.name, t.type, t.val);
                                 subString = "";
+                                String variableValue = "";
+                                String variableName = t.name;
+                                int stopCount = i;
+                                while (true)
+                                {
+                                GetVarArg:
+                                    if (code[i] == '=')
+                                    {
+                                        int saveI = i;
+                                        i++;
+                                        while (code[i] != ';')
+                                        {
+                                            subString += code[i];
+                                            i++;
+                                        }
+                                        variableValue = subString;
+                                        PushToken(variableName, "Variable", variableValue);
+                                        PushToken("=", "Assigment", "null");
+                                        //PushToken(variableValue, "Number", "null");
+                                        i = saveI + 1;
+                                        subString = "";
+                                        break;
+                                    }
+                                    i++;
+                                    if ((i - stopCount) > 4)
+                                    {
+                                        variableValue = "null";
+                                        PushToken(variableName, "Variable", "null");
+                                        i = stopCount;
+                                        break;
+                                    }
+                                }
                             }
                                 
 
@@ -293,15 +327,221 @@ namespace SpoV2
 
     class SyntaxAnalyzer
     {
+        public LinkedList<Token> tokens;
+    }
+
+    class BinaryTree<T> where T : IComparable<T>
+    {
+        private BinaryTree<T> parent, left, right;
+        private String name, type;
+        private List<String> listForPrint = new List<String>();
+
+        public BinaryTree(String name, String type, BinaryTree<T> parent)
+        {
+            this.name = name;
+            this.type = type;
+            this.parent = parent;
+        }
+
+        public void add(String name, String type )
+        {
+            if (name.CompareTo(this.name) < 0)
+            {
+                if (this.left == null)
+                {
+                    this.left = new BinaryTree<T>(name, type, this);
+                }
+                else if (this.left != null)
+                    this.left.add(name, type);
+            }
+            else
+            {
+                if (this.right == null)
+                {
+                    this.right = new BinaryTree<T>(name, type, this);
+                }
+                else if (this.right != null)
+                    this.right.add(name, type);
+            }
+        }
+
+        private BinaryTree<T> _search(BinaryTree<T> tree, String name)
+        {
+            if (tree == null) return null;
+            switch (name.CompareTo(tree.name))
+            {
+                case 1: return _search(tree.right, name);
+                case -1: return _search(tree.left, name);
+                case 0: return tree;
+                default: return null;
+            }
+        }
+
+        public BinaryTree<T> search(String name)
+        {
+            return _search(this, name);
+        }
+
+        public bool remove(String name)
+        {
+            //Проверяем, существует ли данный узел
+            BinaryTree<T> tree = search(name);
+            if (tree == null)
+            {
+                //Если узла не существует, вернем false
+                return false;
+            }
+            BinaryTree<T> curTree;
+
+            //Если удаляем корень
+            if (tree == this)
+            {
+                if (tree.right != null)
+                {
+                    curTree = tree.right;
+                }
+                else curTree = tree.left;
+
+                while (curTree.left != null)
+                {
+                    curTree = curTree.left;
+                }
+                String temp = curTree.name;
+                this.remove(temp);
+                tree.name = temp;
+
+                return true;
+            }
+
+            //Удаление листьев
+            if (tree.left == null && tree.right == null && tree.parent != null)
+            {
+                if (tree == tree.parent.left)
+                    tree.parent.left = null;
+                else
+                {
+                    tree.parent.right = null;
+                }
+                return true;
+            }
+
+            //Удаление узла, имеющего левое поддерево, но не имеющее правого поддерева
+            if (tree.left != null && tree.right == null)
+            {
+                //Меняем родителя
+                tree.left.parent = tree.parent;
+                if (tree == tree.parent.left)
+                {
+                    tree.parent.left = tree.left;
+                }
+                else if (tree == tree.parent.right)
+                {
+                    tree.parent.right = tree.left;
+                }
+                return true;
+            }
+
+            //Удаление узла, имеющего правое поддерево, но не имеющее левого поддерева
+            if (tree.left == null && tree.right != null)
+            {
+                //Меняем родителя
+                tree.right.parent = tree.parent;
+                if (tree == tree.parent.left)
+                {
+                    tree.parent.left = tree.right;
+                }
+                else if (tree == tree.parent.right)
+                {
+                    tree.parent.right = tree.right;
+                }
+                return true;
+            }
+
+            //Удаляем узел, имеющий поддеревья с обеих сторон
+            if (tree.right != null && tree.left != null)
+            {
+                curTree = tree.right;
+
+                while (curTree.left != null)
+                {
+                    curTree = curTree.left;
+                }
+
+                //Если самый левый элемент является первым потомком
+                if (curTree.parent == tree)
+                {
+                    curTree.left = tree.left;
+                    tree.left.parent = curTree;
+                    curTree.parent = tree.parent;
+                    if (tree == tree.parent.left)
+                    {
+                        tree.parent.left = curTree;
+                    }
+                    else if (tree == tree.parent.right)
+                    {
+                        tree.parent.right = curTree;
+                    }
+                    return true;
+                }
+                //Если самый левый элемент НЕ является первым потомком
+                else
+                {
+                    if (curTree.right != null)
+                    {
+                        curTree.right.parent = curTree.parent;
+                    }
+                    curTree.parent.left = curTree.right;
+                    curTree.right = tree.right;
+                    curTree.left = tree.left;
+                    tree.left.parent = curTree;
+                    tree.right.parent = curTree;
+                    curTree.parent = tree.parent;
+                    if (tree == tree.parent.left)
+                    {
+                        tree.parent.left = curTree;
+                    }
+                    else if (tree == tree.parent.right)
+                    {
+                        tree.parent.right = curTree;
+                    }
+
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void _print(BinaryTree<T> node)
+        {
+            if (node == null) return;
+            _print(node.left);
+            listForPrint.Add(node.name);
+            Console.Write(node + " ");
+            if (node.right != null)
+                _print(node.right);
+        }
+
+        public void print()
+        {
+            listForPrint.Clear();
+            _print(this);
+            Console.WriteLine();
+        }
+
+        //public override string ToString()
+        //{
+        //    return val.ToString();
+        //}
 
     }
+
 
     class Program
     {
         static void Main(string[] args)
         {
             LexicalAnalyzer la = new LexicalAnalyzer();
-
+            
             String codeText = la.GetCode();
 
             if (!la.CheckBrackets(codeText))
@@ -310,9 +550,8 @@ namespace SpoV2
             }
 
             la.GetTokens(codeText);
-
             LinkedList<Token> tlist = la.tokenList;
-
+            tlist.Reverse();
             la.PrintList(tlist);
 
             Console.WriteLine("");
