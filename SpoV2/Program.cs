@@ -100,11 +100,15 @@ namespace SpoV2
             
             Token tkn;
             int n = tkns.Count;
+            Console.WriteLine("|Name:               |Type:          |Value:                        |\n");
+            Console.WriteLine("|--------------------|---------------|------------------------------|\n");
             for (int i = 0; i < n; i++)
             {                
-                tkn = tkns.Last.Value;
-                tkns.RemoveLast();
-                Console.WriteLine($"Name: {tkn.name}, Type: {tkn.type}, Value: {tkn.val}\n");
+                tkn = tkns.First.Value;
+                tkns.RemoveFirst();
+                //Console.WriteLine($"{tkn.name}{1, 10}| {tkn.type}\t\t|{tkn.val}\t\t|\n");
+                Console.WriteLine("|{0, 20}|{1,15}|{2,30}|\n", tkn.name, tkn.type, tkn.val);
+                Console.WriteLine("|--------------------|---------------|------------------------------|\n");
             }
         }
 
@@ -328,6 +332,58 @@ namespace SpoV2
     class SyntaxAnalyzer
     {
         public LinkedList<Token> tokens;
+
+        
+
+        public int GetLinesCount(String code)
+        {
+            int result = 0;
+            for (int i = 0; i < code.Length; i++)
+            {
+                if (code[i] == '\n')
+                    result++;
+            }
+            return result;
+        }
+
+        public SyntaxAnalyzer(LinkedList<Token> tkns)
+        {
+            this.tokens = tkns;
+        }
+
+        public void FillArray(String code, String[] arr)
+        {
+            String substr = "";
+            int counter = 0;
+            
+            for (int i = 0; i < code.Length; i++)
+            {
+                
+                if (code[i] == '\n' )
+                {
+                    arr[counter] = substr;
+                    counter++;
+                    substr = "";
+                } else if (code[i] == '\r')
+                {
+
+                } else
+                {
+                    substr += code[i];
+                }
+                
+            }
+            
+            return;
+        }
+
+        public void MakeTree(String code)
+        {
+            String[] codelines = new String[GetLinesCount(code)];
+            FillArray(code, codelines);
+
+        }
+        
     }
 
     class BinaryTree<T> where T : IComparable<T>
@@ -541,20 +597,21 @@ namespace SpoV2
         static void Main(string[] args)
         {
             LexicalAnalyzer la = new LexicalAnalyzer();
-            
+            SyntaxAnalyzer sa;
             String codeText = la.GetCode();
-
+            
             if (!la.CheckBrackets(codeText))
             {
                 Console.WriteLine("Brackets error");
             }
 
             la.GetTokens(codeText);
-            LinkedList<Token> tlist = la.tokenList;
-            tlist.Reverse();
+            sa = new SyntaxAnalyzer(la.tokenList);
+            sa.MakeTree(codeText);
+            LinkedList<Token> tlist = la.tokenList;            
             la.PrintList(tlist);
 
-            Console.WriteLine("");
+
         }
     }
 }
