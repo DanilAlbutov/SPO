@@ -148,7 +148,7 @@ namespace SpoV2
 
         public bool IsSeporator(string text)
         {
-            string[] seporators = { ";", "(", ")", " ", "\n", "\t", ",", "{", "}", "\r", "[", "]", "/" };
+            string[] seporators = { ";", "(", ")", " ", "\n", "\t", ",", "{", "}", "\r", "[", "]" };
             return seporators.Contains(text);
         }
 
