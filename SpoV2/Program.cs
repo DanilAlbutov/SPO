@@ -114,7 +114,7 @@ namespace SpoV2
 
         public bool IsKeyWord(string text)
         {
-            string[] keyWords = { "List", "int", "new", "foreach", "in", "if", "else" };
+            string[] keyWords = { "List", "int", "new", "foreach", "in", "if", "else", "for" };
 
             return keyWords.Contains(text);
         }
@@ -169,11 +169,41 @@ namespace SpoV2
 
         }
 
+        public void CheckSeporators(char ch)
+        {
+            switch (ch)
+            {
+                case '(':
+                    PushToken(ch + "", "CircleBracket", "null");
+                    break;
+                case ')':
+                    PushToken(ch + "", "CircleBracket", "null");
+                    break;
+                case '{':
+                    PushToken(ch + "", "FigureBracket", "null");
+                    break;
+                case '}':
+                    PushToken(ch + "", "FigureBracket", "null");
+                    break;
+                case ',':
+                    PushToken(ch + "", "Comma", "null");
+                    break;
+                case ';':
+                    PushToken(ch + "", "Semicolon", "null");
+                    break;
+                default:
+
+                    break;
+
+            }
+
+        }
+
         public void GetTokens(String code)
         {
             String subString = "";       
             
-            char ch = '0';
+            char ch = '\0';
 
             for (int i = 0; i < code.Length; i++)
             {
@@ -242,8 +272,9 @@ namespace SpoV2
                                         variableValue = DelSpc(subString);
                                         PushToken(variableName, "Variable", variableValue);
                                         PushToken("=", "Assigment", "null");
-                                        PushToken(variableValue, "Number", "null");
+                                        //PushToken(variableValue, "Number", "null");
                                         subString = "";
+                                        i = stopCount + 1;
                                         break;
                                     }
                                     i++;
@@ -290,7 +321,6 @@ namespace SpoV2
                                 int stopCount = i;
                                 while (true)
                                 {
-                                GetVarArg:
                                     if (code[i] == '=')
                                     {
                                         int saveI = i;
@@ -321,6 +351,7 @@ namespace SpoV2
                                 
 
                         }
+                        CheckSeporators(code[i]);
                     }
                 }
             }
