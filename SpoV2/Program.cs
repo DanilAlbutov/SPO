@@ -363,56 +363,166 @@ namespace SpoV2
     class SyntaxAnalyzer
     {
         public LinkedList<Token> tokens;
-
-        
-
-        public int GetLinesCount(String code)
-        {
-            int result = 0;
-            for (int i = 0; i < code.Length; i++)
-            {
-                if (code[i] == '\n')
-                    result++;
-            }
-            return result;
-        }
+        public String branchTab = "";
 
         public SyntaxAnalyzer(LinkedList<Token> tkns)
         {
             this.tokens = tkns;
         }
-
-        public void FillArray(String code, String[] arr)
-        {
-            String substr = "";
-            int counter = 0;
-            
-            for (int i = 0; i < code.Length; i++)
-            {
                 
-                if (code[i] == '\n' )
-                {
-                    arr[counter] = substr;
-                    counter++;
-                    substr = "";
-                } else if (code[i] == '\r')
-                {
+        public void ToUpBranchTab()
+        {
+            branchTab += "\t";
+        }
 
-                } else
+        public void ToDownBranchTab()
+        {
+            branchTab = branchTab.Substring(0, branchTab.Length - 1);
+            
+        }
+
+        public bool IsContainsOperators(Token[] arr, int i)
+        {
+            int j = i;
+            bool res = false;
+            while (arr[j].name != ";")
+            {
+                if (arr[j].name == "+"
+                    || arr[j].name == "-"
+                    || arr[j].name == "*"
+                    || arr[j].name == "/")
                 {
-                    substr += code[i];
+                    res = true;
+                }
+                j++;
+            }
+            return res;
+        }
+
+        public String AnalyzeAssign(Token[] arr, int i)
+        {
+            String res = "";
+            int argsCount = 0;
+            bool isContainsOperators = IsContainsOperators(arr, i);
+            //int j = i;
+            if (!isContainsOperators)
+            {
+                res =  branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
+                ToDownBranchTab();
+                ToDownBranchTab();
+            }
+
+
+            return res;
+
+        }
+
+        public String AnalyzeConditions(Token[] arr, int i)
+        {
+            String res = "";
+            int argsCount = 0;
+            bool isContainsOperators = IsContainsOperators(arr, i);
+            //int j = i;
+            if (!isContainsOperators)
+            {
+                res = branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
+                ToDownBranchTab();
+                ToDownBranchTab();
+            }
+
+
+            return res;
+
+        }
+
+        public String RecursiveTree(int i, String lastToken )
+        {
+
+            String output = "";
+
+            Token[] tokensArray = tokens.ToArray();
+            //int i = -1;
+
+            while (true)
+            {
+                i++;
+
+                String curTok = tokensArray[i].name;
+
+                if (!(i + 1 < tokensArray.Length) && lastToken == "-")
+                    break;
+                else if (tokensArray[i].name == lastToken)
+                {
+                    break;
                 }
                 
+                if (tokensArray[i].name == "int")
+                {
+                    output += branchTab + "[Declare] \n" + branchTab + "Type: " + tokensArray[i].name + "\n";
+                    ToUpBranchTab();
+                }
+                else if (tokensArray[i].name == "=")
+                {
+                    output += branchTab + "[=]\n";
+                    ToUpBranchTab();
+                    output += AnalyzeAssign(tokensArray, i);
+                }
+                else if (tokensArray[i].name == "for")
+                {
+                    output += branchTab + "[for]\n";
+                    ToUpBranchTab();
+                    output += branchTab + "Conditions and Params:\n";
+                    ToUpBranchTab();
+                    output += RecursiveTree(i, ")");
+                    ToDownBranchTab();
+                    output += branchTab + "Block:\n";
+                    ToUpBranchTab();
+                } else if (tokensArray[i].name == "<" 
+                    || tokensArray[i].name == ">" 
+                    || tokensArray[i].name == "==")
+                {
+                    output += branchTab + "[" + tokensArray[i].name + "]" + "\n";
+                    ToUpBranchTab();
+                    output += AnalyzeConditions(tokensArray, i);
+                }
+                
+                
             }
-            
-            return;
+            return output;
         }
 
         public void MakeTree(String code)
         {
-            String[] codelines = new String[GetLinesCount(code)];
-            FillArray(code, codelines);
+            
+            String output = "";
+            
+            Token[] tokensArray = tokens.ToArray();
+            int i = -1;
+            
+            while (true)
+            {
+                i++;
+                if (tokensArray[i].name == "int")
+                {
+                    output += branchTab + "[Declare] \n" + branchTab + "Type: " + tokensArray[i].name + "\n";
+                    ToUpBranchTab();
+                }else if(tokensArray[i].name == "=")
+                {
+                    output += branchTab + "[=]\n";
+                    ToUpBranchTab();
+                    output += AnalyzeAssign(tokensArray, i);
+                }else if(tokensArray[i].name == "for")
+                {
+                    output += branchTab + "[for]\n";
+                    ToUpBranchTab();
+                    output += branchTab + "Conditions and Params:\n";
+                    ToUpBranchTab();
+                }
 
+                if (!(i + 1 < tokensArray.Length))
+                    break;
+            }
+            Console.Write(output);
         }
         
     }
@@ -623,6 +733,7 @@ namespace SpoV2
     }
 
 
+
     class Program
     {
         static void Main(string[] args)
@@ -638,7 +749,8 @@ namespace SpoV2
 
             la.GetTokens(codeText);
             sa = new SyntaxAnalyzer(la.tokenList);
-            sa.MakeTree(codeText);
+            //sa.MakeTree(codeText);
+            Console.Write(sa.RecursiveTree(-1,"-"));
             LinkedList<Token> tlist = la.tokenList;            
             la.PrintList(tlist);
 
