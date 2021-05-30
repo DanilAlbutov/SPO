@@ -363,6 +363,8 @@ namespace SpoV2
     class SyntaxAnalyzer
     {
         public LinkedList<Token> tokens;
+        public LinkedList<Token> operationStack = new LinkedList<Token>();
+        public LinkedList<Token> resultStack = new LinkedList<Token>();
         public String branchTab = "";
         public int tempI = 0;
 
@@ -400,6 +402,119 @@ namespace SpoV2
             return res;
         }
 
+        public bool IsMathOperator(Token tkn)
+        {
+            return tkn.name == "+" || tkn.name == "-" || tkn.name == "*" || tkn.name == "/";
+        }
+
+        public int GetOpPriority(Token tkn)
+        {
+            int res = 0;
+
+            switch (tkn.name)
+            {
+                case "+":
+                    res = 1;
+                    break;
+                case "-":
+                    res = 1;
+                    break;
+                case "*":
+                    res = 2;
+                    break;
+                case "/":
+                    res = 2;
+                    break;
+
+            }
+            return res;
+
+        }
+
+        public void AnalyzeExpression (Token[] arr, int i)
+        {
+            String res = "";
+            bool braketsFlag = false;
+            while (arr[i].name != ";")
+            {
+                if (!IsMathOperator(arr[i]) &&  (arr[i].name != ")") && (arr[i].name != "(")) //если переменная или число
+                {
+                    resultStack.AddLast(arr[i]);
+                }
+                else if (IsMathOperator(arr[i]))
+                {
+                    if (operationStack.Count != 0)
+                    {
+                        if ((GetOpPriority(arr[i]) >= GetOpPriority(operationStack.Last.Value)) || arr[i].name == "(")
+                        {
+                            operationStack.AddLast(arr[i]);
+                        }
+                        else
+                        {
+                            if (braketsFlag)
+                            {
+                                while (operationStack.Last.Value.name != "(")
+                                {
+                                    resultStack.AddLast(operationStack.Last.Value);
+                                    operationStack.RemoveLast();
+                                }
+                                operationStack.AddLast(arr[i]);
+                            }
+                            else
+                            {
+                                while (operationStack.Count != 0)
+                                {
+                                    resultStack.AddLast(operationStack.Last.Value);
+                                    operationStack.RemoveLast();
+                                }
+                            }
+
+
+                        }
+                    } else
+                    {
+                        operationStack.AddLast(arr[i]);
+                    }
+                    
+                } else if(arr[i].name == "(")
+                {
+                    braketsFlag = true;
+                    operationStack.AddLast(arr[i]);
+                    i++;
+                    resultStack.AddLast(arr[i]);
+                } else if (arr[i].name == ")")
+                {
+                    braketsFlag = false;
+                    while (true)
+                    {
+                        if (operationStack.Last.Value.name == null)
+                        {
+                            break;
+                        }
+                        if (operationStack.Last.Value.name == "(")
+                        {
+                            break;
+                        }
+                        resultStack.AddLast(operationStack.Last.Value);
+                        operationStack.RemoveLast();
+                    }
+                    operationStack.RemoveLast();
+                }
+                i++;
+            }
+            if (operationStack.Count != 0)
+            {
+                while (operationStack.Count != 0)
+                {
+                    resultStack.AddLast(operationStack.Last.Value);
+                    operationStack.RemoveLast();
+                }
+            }
+
+
+            
+        }
+
         public String AnalyzeAssign(Token[] arr, int i)
         {
             String res = "";
@@ -414,6 +529,7 @@ namespace SpoV2
             }
             else
             {
+                AnalyzeExpression(arr, i);
 
             }
 
@@ -433,6 +549,10 @@ namespace SpoV2
                 res = branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
                 ToDownBranchTab();
                 ToDownBranchTab();
+            }
+            else
+            {
+                //AnalyzeExpression(arr, i);
             }
 
 
