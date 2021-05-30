@@ -364,6 +364,7 @@ namespace SpoV2
     {
         public LinkedList<Token> tokens;
         public String branchTab = "";
+        public int tempI = 0;
 
         public SyntaxAnalyzer(LinkedList<Token> tkns)
         {
@@ -410,6 +411,10 @@ namespace SpoV2
                 res =  branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
                 ToDownBranchTab();
                 ToDownBranchTab();
+            }
+            else
+            {
+
             }
 
 
@@ -474,7 +479,8 @@ namespace SpoV2
                     output += branchTab + "Conditions and Params:\n";
                     ToUpBranchTab();
                     output += RecursiveTree(i, ")");
-                    ToDownBranchTab();
+                    i = tempI; 
+                    //ToDownBranchTab();
                     output += branchTab + "Block:\n";
                     ToUpBranchTab();
                 } else if (tokensArray[i].name == "<" 
@@ -488,6 +494,7 @@ namespace SpoV2
                 
                 
             }
+            tempI = i;
             return output;
         }
 
