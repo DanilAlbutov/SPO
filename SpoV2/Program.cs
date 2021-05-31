@@ -565,7 +565,7 @@ namespace SpoV2
                                         }
                                         if (operationStack.Count != 0 && GetOpPriority(operationStack.Last.Value) < GetOpPriority(arr[i]))
                                         {
-                                            //resultStack.AddLast(arr[i]); // ---------edited
+                                            operationStack.AddLast(arr[i]); // ---------edited
                                             break;
                                         }
                                             
