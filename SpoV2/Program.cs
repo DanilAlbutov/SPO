@@ -414,16 +414,19 @@ namespace SpoV2
             switch (tkn.name)
             {
                 case "+":
-                    res = 1;
+                    res = 2;
                     break;
                 case "-":
-                    res = 1;
+                    res = 2;
                     break;
                 case "*":
-                    res = 2;
+                    res = 3;
                     break;
                 case "/":
-                    res = 2;
+                    res = 3;
+                    break;
+                case "(":
+                    res = 1;
                     break;
 
             }
@@ -515,6 +518,100 @@ namespace SpoV2
             
         }
 
+        public void AnalyzeExpression2 (Token[] arr, int i)
+        {
+            
+            String curret = "";
+            while (arr[i].name != ";")
+            {
+                i++;
+                curret = arr[i].name;
+
+                if (curret == ";")
+                    break;
+
+                if (curret != "+" &&
+                    curret != "-" &&
+                    curret != "*" &&
+                    curret != "/" &&
+                    curret != "(" &&
+                    curret != ")" )
+                {
+                    resultStack.AddLast(arr[i]);
+                }
+                else
+                {
+                    if (curret == "(")
+                        operationStack.AddLast(arr[i]);
+                    else
+                    {
+                        if (curret != ")")
+                        {
+                            if ((operationStack.Count == 0) || GetOpPriority(operationStack.Last.Value) < GetOpPriority(arr[i]))
+                            {
+                                operationStack.AddLast(arr[i]);
+                            }
+                            else
+                            {
+                                if (GetOpPriority(operationStack.Last.Value) >= GetOpPriority(arr[i]))
+                                {
+                                    while (operationStack.Count != 0)
+                                    {
+
+                                        if (GetOpPriority(operationStack.Last.Value) >= GetOpPriority(arr[i]))
+                                        {
+                                            resultStack.AddLast(operationStack.Last.Value);
+                                            operationStack.RemoveLast();
+                                        }
+                                        if (operationStack.Count != 0 && GetOpPriority(operationStack.Last.Value) < GetOpPriority(arr[i]))
+                                        {
+                                            //resultStack.AddLast(arr[i]); // ---------edited
+                                            break;
+                                        }
+                                            
+                                        if (operationStack.Count == 0 || GetOpPriority(operationStack.Last.Value) < GetOpPriority(arr[i]))
+                                        {
+                                            
+                                            operationStack.AddLast(arr[i]);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (curret == ")")
+                    {
+                        while (!(operationStack.Last.Value.name == "("))
+                        {
+                            if (operationStack.Last.Value.name == "(" || operationStack.Last.Value.name == ")")
+                            {
+                                
+                                operationStack.RemoveLast();
+                            }
+                            else
+                            {
+                                
+                                resultStack.AddLast(operationStack.Last.Value);
+                                operationStack.RemoveLast();
+                            }
+                        }
+                        operationStack.RemoveLast();
+                        
+                    }
+                }
+            }
+            if (operationStack.Count != 0)
+            {
+                while (operationStack.Count != 0)
+                {
+                    
+                    resultStack.AddLast(operationStack.Last.Value);
+                    operationStack.RemoveLast();
+                }
+            }
+        }
+
         public String AnalyzeAssign(Token[] arr, int i)
         {
             String res = "";
@@ -529,7 +626,7 @@ namespace SpoV2
             }
             else
             {
-                AnalyzeExpression(arr, i);
+                AnalyzeExpression2(arr, i);
 
             }
 
