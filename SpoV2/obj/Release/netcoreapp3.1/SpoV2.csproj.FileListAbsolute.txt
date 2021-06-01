@@ -1,0 +1,13 @@
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.exe
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.deps.json
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.runtimeconfig.json
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.runtimeconfig.dev.json
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.dll
+C:\Users\Данил\source\repos\SpoV2\SpoV2\bin\Release\netcoreapp3.1\SpoV2.pdb
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.csprojAssemblyReference.cache
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.AssemblyInfoInputs.cache
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.AssemblyInfo.cs
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.csproj.CoreCompileInputs.cache
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.dll
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.pdb
+C:\Users\Данил\source\repos\SpoV2\SpoV2\obj\Release\netcoreapp3.1\SpoV2.genruntimeconfig.cache

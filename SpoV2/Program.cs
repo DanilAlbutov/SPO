@@ -367,6 +367,7 @@ namespace SpoV2
         public LinkedList<Token> resultStack = new LinkedList<Token>();
         public String branchTab = "";
         public int tempI = 0;
+        BinaryTree<String> tree;
 
         public SyntaxAnalyzer(LinkedList<Token> tkns)
         {
@@ -436,99 +437,19 @@ namespace SpoV2
 
         public void AnalyzeExpression (Token[] arr, int i)
         {
-            String res = "";
-            bool braketsFlag = false;
-            while (arr[i].name != ";")
-            {
-                if (!IsMathOperator(arr[i]) &&  (arr[i].name != ")") && (arr[i].name != "(")) //если переменная или число
-                {
-                    resultStack.AddLast(arr[i]);
-                }
-                else if (IsMathOperator(arr[i]))
-                {
-                    if (operationStack.Count != 0)
-                    {
-                        if ((GetOpPriority(arr[i]) >= GetOpPriority(operationStack.Last.Value)) || arr[i].name == "(")
-                        {
-                            operationStack.AddLast(arr[i]);
-                        }
-                        else
-                        {
-                            if (braketsFlag)
-                            {
-                                while (operationStack.Last.Value.name != "(")
-                                {
-                                    resultStack.AddLast(operationStack.Last.Value);
-                                    operationStack.RemoveLast();
-                                }
-                                operationStack.AddLast(arr[i]);
-                            }
-                            else
-                            {
-                                while (operationStack.Count != 0)
-                                {
-                                    resultStack.AddLast(operationStack.Last.Value);
-                                    operationStack.RemoveLast();
-                                }
-                            }
-
-
-                        }
-                    } else
-                    {
-                        operationStack.AddLast(arr[i]);
-                    }
-                    
-                } else if(arr[i].name == "(")
-                {
-                    braketsFlag = true;
-                    operationStack.AddLast(arr[i]);
-                    i++;
-                    resultStack.AddLast(arr[i]);
-                } else if (arr[i].name == ")")
-                {
-                    braketsFlag = false;
-                    while (true)
-                    {
-                        if (operationStack.Last.Value.name == null)
-                        {
-                            break;
-                        }
-                        if (operationStack.Last.Value.name == "(")
-                        {
-                            break;
-                        }
-                        resultStack.AddLast(operationStack.Last.Value);
-                        operationStack.RemoveLast();
-                    }
-                    operationStack.RemoveLast();
-                }
-                i++;
-            }
-            if (operationStack.Count != 0)
-            {
-                while (operationStack.Count != 0)
-                {
-                    resultStack.AddLast(operationStack.Last.Value);
-                    operationStack.RemoveLast();
-                }
-            }
-
-
-            
-        }
-
-        public void AnalyzeExpression2 (Token[] arr, int i)
-        {
             
             String curret = "";
-            while (arr[i].name != ";")
+            while (true)
             {
                 i++;
                 curret = arr[i].name;
 
                 if (curret == ";")
+                {
+                    tempI = i;
                     break;
+                }
+                    
 
                 if (curret != "+" &&
                     curret != "-" &&
@@ -620,20 +541,20 @@ namespace SpoV2
             //int j = i;
             if (!isContainsOperators)
             {
-                res =  branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
+                res =  branchTab + "-----[" + arr[i - 1].name + "]\n" + branchTab + "\\____[" + arr[i + 1].name + "]\n";
                 ToDownBranchTab();
                 ToDownBranchTab();
             }
             else
             {
-                AnalyzeExpression2(arr, i);
+                AnalyzeExpression(arr, i);
+                i = tempI;
+                MyTree tree = new MyTree(resultStack);
+                tree.FillTree();
 
             }
-
-
             return res;
-
-        }
+        }      
 
         public String AnalyzeConditions(Token[] arr, int i)
         {
@@ -643,7 +564,7 @@ namespace SpoV2
             //int j = i;
             if (!isContainsOperators)
             {
-                res = branchTab + "[" + arr[i - 1].name + "]\n" + branchTab + "[" + arr[i + 1].name + "]\n";
+                res = branchTab + "-----[" + arr[i - 1].name + "]\n" + branchTab + "\\____[" + arr[i + 1].name + "]\n";
                 ToDownBranchTab();
                 ToDownBranchTab();
             }
@@ -751,38 +672,183 @@ namespace SpoV2
         
     }
 
+    class Node
+    {
+        public Node parent, left, right;
+        public Token tkn;
+        public int id;
+
+
+        public Node(Token t, int id)
+        {
+            this.tkn = t;
+            this.id = id;
+        }
+    }
+
+    class MyTree
+    {
+        public Node[] NodeArr;
+        public Node CurNode;
+        public LinkedList<Token> resultStack;
+
+        public MyTree(LinkedList<Token> resultStack )
+        {
+            NodeArr = new Node[resultStack.Count];
+            this.resultStack = resultStack;
+        }
+
+        public bool IsMathOperator(Token tkn)
+        {
+            return tkn.name == "+" || tkn.name == "-" || tkn.name == "*" || tkn.name == "/";
+        }
+
+        public int GetNextI()
+        {
+            int res = 0;
+
+            while (NodeArr[res] != null )
+            {
+                res++;
+            }
+
+            return res;
+        }
+
+        public void FillTree()
+        {
+            CurNode = null;
+            for (int i = 0; i < resultStack.Count; i++)
+            {
+                
+                if (CurNode == null)
+                {
+                    if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[0] == null)
+                    {
+                        NodeArr[i] = new Node(resultStack.Last.Value, i);
+                        resultStack.RemoveLast();
+                    }
+                    else if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[i - 1] != null)
+                    {
+                        NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //присваиваем правой ноды родителя ссылку на новую текущую ноду
+                        NodeArr[i] = NodeArr[i - 1].right; // текущей ветви присваиваем новую ветвь
+                        NodeArr[i].parent = NodeArr[i - 1];  // присваиваем ссылку на родителя текущей ноды
+                        resultStack.RemoveLast();
+                    }
+                    else if (!IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0)
+                    {
+                        if (NodeArr[i - 1].right == null)
+                        {
+                            NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //
+                            NodeArr[i] = NodeArr[i - 1].right;
+                            NodeArr[i].parent = NodeArr[i - 1];
+                            resultStack.RemoveLast();
+                        }
+                        else if (NodeArr[i - 1].left == null)
+                        {
+                            NodeArr[i - 2].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[i - 2].left;
+                            NodeArr[i].parent = NodeArr[i - 2];
+                            resultStack.RemoveLast();
+                            if (NodeArr[i].parent.right != null && NodeArr[i].parent.left != null)
+                            {
+                                MoveUp(NodeArr[i]);
+                            }
+                        }
+                    }
+                } else
+                {
+
+                    if (IsMathOperator(resultStack.Last.Value))
+                    {
+                        if (CurNode != null && (CurNode.right != null || CurNode.left != null))
+                        {
+                            while (true)
+                            {
+                                if (CurNode.left == null)
+                                {
+                                    break;
+                                }
+                                MoveUp(CurNode);
+                            }
+
+                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[CurNode.id].left;
+                            NodeArr[i].parent = NodeArr[CurNode.id];
+                            resultStack.RemoveLast();
+                            CurNode = null;
+                        }
+                    }
+                    else if (!IsMathOperator(resultStack.Last.Value))
+                    {
+                        if (CurNode != null && CurNode.left != null )
+                        {
+                            while (true)
+                            {
+                                if (CurNode.left == null)
+                                {
+                                    break;
+                                }
+                                MoveUp(CurNode);
+                            }
+                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[CurNode.id].left;
+                            NodeArr[i].parent = NodeArr[CurNode.id];
+                            resultStack.RemoveLast();
+                            //CurNode = null;
+                        }
+                    }
+                    
+                }
+            }
+        }
+        public void MoveUp(Node node)
+        {
+            if (node.parent != null)
+            {
+                CurNode = node.parent;
+            } else
+            {
+                CurNode = node;
+            }
+            
+        }
+    }
+
+
     class BinaryTree<T> where T : IComparable<T>
     {
         private BinaryTree<T> parent, left, right;
-        private String name, type;
+        private String name;
         private List<String> listForPrint = new List<String>();
 
-        public BinaryTree(String name, String type, BinaryTree<T> parent)
+
+
+        public BinaryTree(String name, BinaryTree<T> parent)
         {
-            this.name = name;
-            this.type = type;
+            this.name = name;;
             this.parent = parent;
         }
 
-        public void add(String name, String type )
+        public void add(String name)
         {
             if (name.CompareTo(this.name) < 0)
             {
                 if (this.left == null)
                 {
-                    this.left = new BinaryTree<T>(name, type, this);
+                    this.left = new BinaryTree<T>(name, this);
                 }
                 else if (this.left != null)
-                    this.left.add(name, type);
+                    this.left.add(name);
             }
             else
             {
                 if (this.right == null)
                 {
-                    this.right = new BinaryTree<T>(name, type, this);
+                    this.right = new BinaryTree<T>(name, this);
                 }
                 else if (this.right != null)
-                    this.right.add(name, type);
+                    this.right.add(name);
             }
         }
 
@@ -956,6 +1022,8 @@ namespace SpoV2
 
     }
 
+    
+
 
 
     class Program
@@ -970,7 +1038,7 @@ namespace SpoV2
             {
                 Console.WriteLine("Brackets error");
             }
-
+            Console.WriteLine("123");
             la.GetTokens(codeText);
             sa = new SyntaxAnalyzer(la.tokenList);
             //sa.MakeTree(codeText);
