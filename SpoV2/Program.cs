@@ -718,7 +718,8 @@ namespace SpoV2
         public void FillTree()
         {
             CurNode = null;
-            for (int i = 0; i < resultStack.Count; i++)
+            int n = resultStack.Count;
+            for (int i = 0; i < n; i++)
             {
                 
                 if (CurNode == null)
@@ -743,9 +744,7 @@ namespace SpoV2
                             NodeArr[i] = NodeArr[i - 1].right;
                             NodeArr[i].parent = NodeArr[i - 1];
                             resultStack.RemoveLast();
-                        }
-                        else if (NodeArr[i - 1].left == null)
-                        {
+                            i++;
                             NodeArr[i - 2].left = new Node(resultStack.Last.Value, i);
                             NodeArr[i] = NodeArr[i - 2].left;
                             NodeArr[i].parent = NodeArr[i - 2];
@@ -755,6 +754,17 @@ namespace SpoV2
                                 MoveUp(NodeArr[i]);
                             }
                         }
+                        //else if (NodeArr[i - 2].left == null)
+                        //{
+                        //    NodeArr[i - 2].left = new Node(resultStack.Last.Value, i);
+                        //    NodeArr[i] = NodeArr[i - 2].left;
+                        //    NodeArr[i].parent = NodeArr[i - 2];
+                        //    resultStack.RemoveLast();
+                        //    if (NodeArr[i].parent.right != null && NodeArr[i].parent.left != null)
+                        //    {
+                        //        MoveUp(NodeArr[i]);
+                        //    }
+                        //}
                     }
                 } else
                 {
