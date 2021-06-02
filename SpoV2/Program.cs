@@ -654,6 +654,12 @@ namespace SpoV2
                 {
                     output += branchTab + "\\__[Declare] \n" + branchTab + "   Type: " + tokensArray[i].name + "\n";
                     ToUpBranchTab();
+                    if (tokensArray[i + 2].name == ";")
+                    {
+                        //ToUpBranchTab();
+                        output += branchTab + "\\__[" + tokensArray[i + 1].name + "]\n";
+                        ToDownBranchTab();
+                    }
                 }
                 else if (tokensArray[i].name == "=")
                 {
