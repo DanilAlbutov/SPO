@@ -12,6 +12,158 @@ namespace SpoV2
         public String val;        
     }
 
+    public struct Variable
+    {
+        public String varType;
+        public String varName;
+        public int varId;    
+    }
+
+
+    class Node
+    {
+        public Node parent, left, right;
+        public Token tkn;
+        public int id;
+
+
+        public Node(Token t, int id)
+        {
+            this.tkn = t;
+            this.id = id;
+        }
+    }
+
+    class MyTree
+    {
+        public Node[] NodeArr;
+        public Node CurNode;
+        public LinkedList<Token> resultStack;
+
+        public MyTree(LinkedList<Token> resultStack)
+        {
+            NodeArr = new Node[resultStack.Count];
+            this.resultStack = resultStack;
+        }
+
+        public bool IsMathOperator(Token tkn)
+        {
+            return tkn.name == "+" || tkn.name == "-" || tkn.name == "*" || tkn.name == "/";
+        }
+
+        public int GetNextI()
+        {
+            int res = 0;
+
+            while (NodeArr[res] != null)
+            {
+                res++;
+            }
+
+            return res;
+        }
+
+        public void FillTree()
+        {
+            CurNode = null;
+            int n = resultStack.Count;
+            for (int i = 0; i < n; i++)
+            {
+
+                if (CurNode == null)
+                {
+                    if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[0] == null)
+                    {
+                        NodeArr[i] = new Node(resultStack.Last.Value, i);
+                        resultStack.RemoveLast();
+                    }
+                    else if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[i - 1] != null)
+                    {
+                        NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //присваиваем правой ноды родителя ссылку на новую текущую ноду
+                        NodeArr[i] = NodeArr[i - 1].right; // текущей ветви присваиваем новую ветвь
+                        NodeArr[i].parent = NodeArr[i - 1];  // присваиваем ссылку на родителя текущей ноды
+                        resultStack.RemoveLast();
+                    }
+                    else if (!IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0)
+                    {
+                        if (NodeArr[i - 1].right == null)
+                        {
+                            NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //
+                            NodeArr[i] = NodeArr[i - 1].right;
+                            NodeArr[i].parent = NodeArr[i - 1];
+                            resultStack.RemoveLast();
+                            i++;
+                            NodeArr[i - 2].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[i - 2].left;
+                            NodeArr[i].parent = NodeArr[i - 2];
+                            resultStack.RemoveLast();
+                            if (NodeArr[i].parent.right != null && NodeArr[i].parent.left != null)
+                            {
+                                MoveUp(NodeArr[i]);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+
+                    if (IsMathOperator(resultStack.Last.Value))
+                    {
+                        if (CurNode != null && (CurNode.right != null || CurNode.left != null))
+                        {
+                            while (true)
+                            {
+                                if (CurNode.left == null)
+                                {
+                                    break;
+                                }
+                                MoveUp(CurNode);
+                            }
+
+                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[CurNode.id].left;
+                            NodeArr[i].parent = NodeArr[CurNode.id];
+                            resultStack.RemoveLast();
+                            CurNode = null;
+                        }
+                    }
+                    else if (!IsMathOperator(resultStack.Last.Value))
+                    {
+                        if (CurNode != null && CurNode.left != null)
+                        {
+                            while (true)
+                            {
+                                if (CurNode.left == null)
+                                {
+                                    break;
+                                }
+                                MoveUp(CurNode);
+                            }
+                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
+                            NodeArr[i] = NodeArr[CurNode.id].left;
+                            NodeArr[i].parent = NodeArr[CurNode.id];
+                            resultStack.RemoveLast();
+                            //CurNode = null;
+                        }
+                    }
+
+                }
+            }
+        }
+
+        public void MoveUp(Node node)
+        {
+            if (node.parent != null)
+            {
+                CurNode = node.parent;
+            }
+            else
+            {
+                CurNode = node;
+            }
+
+        }
+    }
 
     class LexicalAnalyzer
     {
@@ -249,10 +401,7 @@ namespace SpoV2
                                     i++;
                                 }
                                 String variableName = DelSpc(subString);
-                                if (variableName == "enum")
-                                {
-                                    Console.Write("");
-                                }
+                                
                                 if (!IsVariable(variableName))
                                 {
                                     PrintException("Variable name incorrect");
@@ -349,6 +498,35 @@ namespace SpoV2
                                         PushToken(variableName, "Variable", "null");
                                         i = stopCount;
                                         break;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (IsVariable(subString))
+                                {
+                                    String variableName = subString;
+                                    String variableValue = "";
+                                    while (true)
+                                    {
+                                        if (code[i] == '=')
+                                        {
+                                            int saveI = i;
+                                            i++;
+                                            while (code[i] != ';')
+                                            {
+                                                subString += code[i];
+                                                i++;
+                                            }
+                                            variableValue = subString;
+                                            PushToken(variableName, "Variable", variableValue);
+                                            PushToken("=", "Assigment", "null");
+                                            //PushToken(variableValue, "Number", "null");
+                                            i = saveI + 1;
+                                            subString = "";
+                                            break;
+                                        }
+                                        i++;
                                     }
                                 }
                             }
@@ -656,7 +834,7 @@ namespace SpoV2
                     ToUpBranchTab();
                     if (tokensArray[i + 2].name == ";")
                     {
-                        //ToUpBranchTab();
+                        
                         output += branchTab + "\\__[" + tokensArray[i + 1].name + "]\n";
                         ToDownBranchTab();
                     }
@@ -704,169 +882,136 @@ namespace SpoV2
         
     }
 
-    class Node
+    class SemanticAnalyzer
     {
-        public Node parent, left, right;
-        public Token tkn;
-        public int id;
+        public LinkedList<Token> tokenList;
+        public LinkedList<Variable> variables = new LinkedList<Variable>();
+        public String errors = "";
 
-
-        public Node(Token t, int id)
+        public SemanticAnalyzer(LinkedList<Token> tkns)
         {
-            this.tkn = t;
-            this.id = id;
-        }
-    }
+            this.tokenList = tkns;
 
-    class MyTree
-    {
-        public Node[] NodeArr;
-        public Node CurNode;
-        public LinkedList<Token> resultStack;
-
-        public MyTree(LinkedList<Token> resultStack )
-        {
-            NodeArr = new Node[resultStack.Count];
-            this.resultStack = resultStack;
         }
 
-        public bool IsMathOperator(Token tkn)
+        public void PrintVariableList()
         {
-            return tkn.name == "+" || tkn.name == "-" || tkn.name == "*" || tkn.name == "/";
-        }
+            LinkedList<Variable> vars = this.variables;
 
-        public int GetNextI()
-        {
-            int res = 0;
-
-            while (NodeArr[res] != null )
-            {
-                res++;
-            }
-
-            return res;
-        }
-
-        public void FillTree()
-        {
-            CurNode = null;
-            int n = resultStack.Count;
+            Variable variable;
+            int n = vars.Count;
+            Console.WriteLine("__________________________________________________________________\n");
+            Console.WriteLine("\n__________________________________________________________________\n");
+            Console.WriteLine("|Type:               |Name:          |ID:                        |\n");
+            Console.WriteLine("|--------------------|---------------|---------------------------|\n");
             for (int i = 0; i < n; i++)
             {
-                
-                if (CurNode == null)
-                {
-                    if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[0] == null)
-                    {
-                        NodeArr[i] = new Node(resultStack.Last.Value, i);
-                        resultStack.RemoveLast();
-                    }
-                    else if (IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0 && NodeArr[i - 1] != null)
-                    {
-                        NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //присваиваем правой ноды родителя ссылку на новую текущую ноду
-                        NodeArr[i] = NodeArr[i - 1].right; // текущей ветви присваиваем новую ветвь
-                        NodeArr[i].parent = NodeArr[i - 1];  // присваиваем ссылку на родителя текущей ноды
-                        resultStack.RemoveLast();
-                    }
-                    else if (!IsMathOperator(resultStack.Last.Value) && resultStack.Count != 0)
-                    {
-                        if (NodeArr[i - 1].right == null)
-                        {
-                            NodeArr[i - 1].right = new Node(resultStack.Last.Value, i); //
-                            NodeArr[i] = NodeArr[i - 1].right;
-                            NodeArr[i].parent = NodeArr[i - 1];
-                            resultStack.RemoveLast();
-                            i++;
-                            NodeArr[i - 2].left = new Node(resultStack.Last.Value, i);
-                            NodeArr[i] = NodeArr[i - 2].left;
-                            NodeArr[i].parent = NodeArr[i - 2];
-                            resultStack.RemoveLast();
-                            if (NodeArr[i].parent.right != null && NodeArr[i].parent.left != null)
-                            {
-                                MoveUp(NodeArr[i]);
-                            }
-                        }
-                    }
-                } else
-                {
+                variable = vars.First.Value;
+                vars.RemoveFirst();
 
-                    if (IsMathOperator(resultStack.Last.Value))
-                    {
-                        if (CurNode != null && (CurNode.right != null || CurNode.left != null))
-                        {
-                            while (true)
-                            {
-                                if (CurNode.left == null)
-                                {
-                                    break;
-                                }
-                                MoveUp(CurNode);
-                            }
+                Console.WriteLine("|{0, 20}|{1,15}|{2,27}|\n", variable.varType, variable.varName, variable.varId);
+                Console.WriteLine("|--------------------|---------------|---------------------------|\n");
+            }
+        }
 
-                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
-                            NodeArr[i] = NodeArr[CurNode.id].left;
-                            NodeArr[i].parent = NodeArr[CurNode.id];
-                            resultStack.RemoveLast();
-                            CurNode = null;
-                        }
-                    }
-                    else if (!IsMathOperator(resultStack.Last.Value))
-                    {
-                        if (CurNode != null && CurNode.left != null )
-                        {
-                            while (true)
-                            {
-                                if (CurNode.left == null)
-                                {
-                                    break;
-                                }
-                                MoveUp(CurNode);
-                            }
-                            NodeArr[CurNode.id].left = new Node(resultStack.Last.Value, i);
-                            NodeArr[i] = NodeArr[CurNode.id].left;
-                            NodeArr[i].parent = NodeArr[CurNode.id];
-                            resultStack.RemoveLast();
-                            //CurNode = null;
-                        }
-                    }
-                    
+        public void PrintErrors()
+        {
+            Console.WriteLine("--------------------ERRORS------------------\n");
+            Console.WriteLine(errors);
+        }
+
+        public void CheckDeclare(Token[] arr, int i)
+        {
+            i++;
+            List<Variable> list = variables.ToList<Variable>();
+            Variable tempVar = list.Find(item => item.varName == arr[i].name);
+            if (tempVar.varName == null)
+            {
+                Variable varToAdd;
+                varToAdd.varName = arr[i].name;
+                varToAdd.varType = arr[i - 1].name;
+                varToAdd.varId = i;
+                variables.AddLast(varToAdd);
+            }
+            else if (tempVar.varName != null)
+            {
+                errors += "Error: variable [" + tempVar.varName + "] is declared twice (Token №: " + i + ").\n";
+            }
+
+        }
+
+        public void GetDeclareTable()
+        {
+            Token[] arr = tokenList.ToArray();
+            int n = arr.Length;
+            for (int i = 0; i < n; i++)
+            {
+                if (arr[i].name == "int")
+                {
+                    CheckDeclare(arr, i);
                 }
             }
+
         }
 
-        public void MoveUp(Node node)
+        public void CheckDeclareOrder()
         {
-            if (node.parent != null)
+            Token[] arr = tokenList.ToArray();
+            int n = arr.Length;
+            for (int i = 0; i < n; i++)
             {
-                CurNode = node.parent;
-            } else
-            {
-                CurNode = node;
+                List<Variable> list = variables.ToList<Variable>();
+                Variable tempVar = list.Find(item => item.varName == arr[i].name);
+                if (tempVar.varName != null)
+                {
+                    if (tempVar.varId > i)
+                    {
+                        errors += "Error: the order of declaration variable [" + tempVar.varName + "] is broken (Token №: " + i + ").\n";
+                    }
+                }
             }
-            
+
         }
-    }
+
+        public void StartAnalize()
+        {
+            GetDeclareTable();
+            CheckDeclareOrder();
+
+        }
     
+    
+    }
+
+
     class Program
     {
         static void Main(string[] args)
         {
             Console.WriteLine("Program start\n");
+
             LexicalAnalyzer la = new LexicalAnalyzer();
             SyntaxAnalyzer sa;
+            SemanticAnalyzer semA;
             String codeText = la.GetCode();
             
             if (!la.CheckBrackets(codeText))
             {
                 Console.WriteLine("Brackets error");
             }
-            la.GetTokens(codeText);
-            sa = new SyntaxAnalyzer(la.tokenList);
-            //sa.MakeTree(codeText);
-            Console.Write(sa.RecursiveTree(-1,"-"));
-            LinkedList<Token> tlist = la.tokenList;            
-            la.PrintList(tlist);
+            la.GetTokens(codeText); //получение списка токенов
 
+            sa = new SyntaxAnalyzer(la.tokenList);
+            semA = new SemanticAnalyzer(la.tokenList);
+            semA.StartAnalize(); //получения таблицы переменных
+            
+            
+            Console.Write(sa.RecursiveTree(-1,"-")); //получение и вывод синтаксического дерева
+
+            LinkedList<Token> tlist = la.tokenList;            
+            la.PrintList(tlist); //вывод таблицы токенов
+            semA.PrintVariableList(); // вывод таблицы переменных
+            semA.PrintErrors();
             Console.WriteLine("Program end\n");
         }
     }
