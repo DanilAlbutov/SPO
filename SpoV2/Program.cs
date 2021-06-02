@@ -106,7 +106,7 @@ namespace SpoV2
             {                
                 tkn = tkns.First.Value;
                 tkns.RemoveFirst();
-                //Console.WriteLine($"{tkn.name}{1, 10}| {tkn.type}\t\t|{tkn.val}\t\t|\n");
+                
                 Console.WriteLine("|{0, 20}|{1,15}|{2,30}|\n", tkn.name, tkn.type, tkn.val);
                 Console.WriteLine("|--------------------|---------------|------------------------------|\n");
             }
@@ -243,12 +243,16 @@ namespace SpoV2
                                     i++;
                                 } while (!Char.IsLetter(code[i]));
                                     
-                                while (code[i] != ' ')
+                                while (code[i] != ' ' && code[i] != ';'  && code[i] != '\r' && code[i] != '\n')
                                 {
                                     subString += code[i];
                                     i++;
                                 }
                                 String variableName = DelSpc(subString);
+                                if (variableName == "enum")
+                                {
+                                    Console.Write("");
+                                }
                                 if (!IsVariable(variableName))
                                 {
                                     PrintException("Variable name incorrect");
@@ -690,39 +694,7 @@ namespace SpoV2
             return output;
         }
 
-        public void MakeTree(String code)
-        {
-            
-            String output = "";
-            
-            Token[] tokensArray = tokens.ToArray();
-            int i = -1;
-            
-            while (true)
-            {
-                i++;
-                if (tokensArray[i].name == "int")
-                {
-                    output += branchTab + "[Declare] \n" + branchTab + "Type: " + tokensArray[i].name + "\n";
-                    ToUpBranchTab();
-                }else if(tokensArray[i].name == "=")
-                {
-                    output += branchTab + "[=]\n";
-                    ToUpBranchTab();
-                    output += AnalyzeAssign(tokensArray, i);
-                }else if(tokensArray[i].name == "for")
-                {
-                    output += branchTab + "[for]\n";
-                    ToUpBranchTab();
-                    output += branchTab + "Conditions and Params:\n";
-                    ToUpBranchTab();
-                }
-
-                if (!(i + 1 < tokensArray.Length))
-                    break;
-            }
-            Console.Write(output);
-        }
+        
         
     }
 

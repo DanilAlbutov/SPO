@@ -5,6 +5,7 @@ for (int i = 0; i < 23; i ++)
     sum = sum + element * (2 + i) * (5 / element);
     for (int j = 0; j < 10; j ++)
     {
+        int enum;
         sum = sum / 6;
     }    
 }
