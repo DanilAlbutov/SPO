@@ -381,7 +381,11 @@ namespace SpoV2
 
         public void ToDownBranchTab()
         {
-            branchTab = branchTab.Substring(0, branchTab.Length - 1);
+            if (branchTab.Length - 1 >= 0)
+            {
+                branchTab = branchTab.Substring(0, branchTab.Length - 1);
+            }
+            
             
         }
 
@@ -435,7 +439,7 @@ namespace SpoV2
 
         }
 
-        public void AnalyzeExpression (Token[] arr, int i)
+        public void AnalyzeExpression (Token[] arr, int i) //обратная польская запись
         {
             
             String curret = "";
@@ -545,20 +549,21 @@ namespace SpoV2
             }
             else
             {
-                ToUpBranchTab();
+                //ToUpBranchTab();
                 res += branchTab + "\\__[" + cur.tkn.name + "]\n";
+                //ToDownBranchTab();
             }
 
             
             if (cur.right != null)
             {
-                //ToUpBranchTab();
+                ToUpBranchTab();
                 res += RecursivePrintTree(arr, cur.right.id);
                 ToDownBranchTab();
             }
             if (cur.left != null)
             {
-                //ToUpBranchTab();
+                ToUpBranchTab();
                 res += RecursivePrintTree(arr, cur.left.id);
                 ToDownBranchTab();                
             }
@@ -587,10 +592,12 @@ namespace SpoV2
             else
             {
                 AnalyzeExpression(arr, i);
+                res = branchTab + "---[" + arr[i - 1].name + "]\n";
                 i = tempI;
                 MyTree tree = new MyTree(resultStack);
                 tree.FillTree();
-                res = branchTab + RecursivePrintTree(tree.NodeArr, 0);
+                
+                res += RecursivePrintTree(tree.NodeArr, 0);
 
             }
             return res;
@@ -641,33 +648,40 @@ namespace SpoV2
                 
                 if (tokensArray[i].name == "int")
                 {
-                    output += branchTab + "[Declare] \n" + branchTab + "Type: " + tokensArray[i].name + "\n";
+                    output += branchTab + "\\__[Declare] \n" + branchTab + "   Type: " + tokensArray[i].name + "\n";
                     ToUpBranchTab();
                 }
                 else if (tokensArray[i].name == "=")
                 {
-                    output += branchTab + "[=]\n";
+                    output += branchTab + "\\__[=]\n";
                     ToUpBranchTab();
                     output += AnalyzeAssign(tokensArray, i);
                 }
                 else if (tokensArray[i].name == "for")
                 {
-                    output += branchTab + "[for]\n";
+                    output += branchTab + "\\__[for]\n";
                     ToUpBranchTab();
-                    output += branchTab + "Conditions and Params:\n";
+                    output += branchTab + "Conditions\n " + branchTab + "and Params:\n";
                     ToUpBranchTab();
                     output += RecursiveTree(i, ")");
                     i = tempI; 
-                    //ToDownBranchTab();
+                    ToDownBranchTab();
                     output += branchTab + "Block:\n";
                     ToUpBranchTab();
                 } else if (tokensArray[i].name == "<" 
                     || tokensArray[i].name == ">" 
                     || tokensArray[i].name == "==")
                 {
-                    output += branchTab + "[" + tokensArray[i].name + "]" + "\n";
+                    output += branchTab + "\\__[" + tokensArray[i].name + "]" + "\n";
                     ToUpBranchTab();
                     output += AnalyzeConditions(tokensArray, i);
+                } else if (tokensArray[i].name == "++" || tokensArray[i].name == "--")
+                {
+                    ToUpBranchTab();
+                    output += branchTab + "\\__[" + tokensArray[i].name + "]\n";
+                    ToUpBranchTab();
+                    output += branchTab + "\\__[" + tokensArray[i - 1].name + "]\n";
+                    ToDownBranchTab();
                 }
                 
                 
