@@ -533,35 +533,40 @@ namespace SpoV2
             }
         }
 
-        public String RecursivePrintTree(Node[] arr,int i)
+        public String RecursivePrintTree(Node[] arr, int i)
         {
             String res = "";
             Node cur = arr[i];
-            if (cur.right == null)
+            if (i >= arr.Length)
+                return res;
+            if (cur == null)
             {
                 return res;
             }
-            
-            res += branchTab + "\\__[" + cur.tkn.name + "]\n";
-            if (cur.right != null)
+            else
             {
                 ToUpBranchTab();
+                res += branchTab + "\\__[" + cur.tkn.name + "]\n";
+            }
 
+            
+            if (cur.right != null)
+            {
+                //ToUpBranchTab();
                 res += RecursivePrintTree(arr, cur.right.id);
                 ToDownBranchTab();
             }
-
-            if (cur.left == null)
-            {
-                return res;
-            }
             if (cur.left != null)
             {
-                ToUpBranchTab();
-
+                //ToUpBranchTab();
                 res += RecursivePrintTree(arr, cur.left.id);
-                ToDownBranchTab();
+                ToDownBranchTab();                
             }
+
+            if (cur.left == null && cur.right == null)
+            {
+                return res;
+            }            
 
             return res;
 
@@ -854,6 +859,7 @@ namespace SpoV2
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Program start\n");
             LexicalAnalyzer la = new LexicalAnalyzer();
             SyntaxAnalyzer sa;
             String codeText = la.GetCode();
@@ -869,7 +875,7 @@ namespace SpoV2
             LinkedList<Token> tlist = la.tokenList;            
             la.PrintList(tlist);
 
-
+            Console.WriteLine("Program end\n");
         }
     }
 }
