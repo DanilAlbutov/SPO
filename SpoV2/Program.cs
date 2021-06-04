@@ -19,7 +19,6 @@ namespace SpoV2
         public int varId;    
     }
 
-
     class Node
     {
         public Node parent, left, right;
@@ -983,9 +982,165 @@ namespace SpoV2
     
     }
 
+    class CodeGenerator
+    {
+        public LinkedList<Token> tokList;
+        public LinkedList<Variable> varList;
+        public String tab = "";
+
+        public CodeGenerator(LinkedList<Token> t, LinkedList<Variable> v)
+        {
+            tokList = t;
+            varList = v;
+            this.tokList = t;
+            this.varList = v;
+        }
+
+        public void ToUpBranchTab()
+        {
+            tab += "\t";
+        }
+
+        public void ToDownBranchTab()
+        {
+            if (tab.Length - 1 >= 0)
+            {
+                tab = tab.Substring(0, tab.Length - 1);
+            }
+
+
+        }
+
+        public String GenerateCode(LinkedList<Token> tList)
+        {
+            Token[] arr = tList.ToArray<Token>();
+            String code = "";
+            Variable[] varArr = varList.ToArray<Variable>();
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i].name == "{")
+                {
+                    ToUpBranchTab();
+                }
+                else
+                if (arr[i].name == "}")
+                {
+                    ToDownBranchTab();
+                }
+                else if (arr[i].name == "int")
+                {
+                    i++;
+                    code += tab + arr[i] + " ";
+                } else if (arr[i].name =="=")
+                {
+                    code += "= ";
+                    while (arr[i].name != ";")
+                    {
+                        code += arr[i].name + " ";
+                        i++;
+                    }
+                    code += "\n";
+                } else if (arr[i].name == "for")
+                {
+                    code += tab + "for ";
+                    i += 3;
+                    code += arr[i].name + " in range(";
+                    i += 2;
+                    code += arr[i] + ", ";
+                    i += 4;
+                    code += arr[i] + "):\n";
+                    while (arr[i].name != ")")
+                    {
+                        i++;
+                    }                    
+                } else {
+                    code += arr[i].name + " ";
+                }
+            }
+
+
+            return code;
+
+        }
+    
+    }
 
     class Program
     {
+        public static String tab = "";
+
+        public static void ToUpBranchTab()
+        {
+            tab += "\t";
+        }
+
+        public static void ToDownBranchTab()
+        {
+            if (tab.Length - 1 >= 0)
+            {
+                tab = tab.Substring(0, tab.Length - 1);
+            }
+
+
+        }
+
+
+        public static String GenerateCode(LinkedList<Token> tList)
+        {
+            Token[] arr = tList.ToArray<Token>();
+            String code = "";
+            //Variable[] varArr = varList.ToArray<Variable>();
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i].name == "{")
+                {
+                    ToUpBranchTab();
+                }
+                else
+                if (arr[i].name == "}")
+                {
+                    ToDownBranchTab();
+                }
+                else if (arr[i].name == "int")
+                {
+                    i++;
+                    code += tab + arr[i] + " ";
+                }
+                else if (arr[i].name == "=")
+                {
+                    code += "= ";
+                    while (arr[i].name != ";")
+                    {
+                        code += arr[i].name + " ";
+                        i++;
+                    }
+                    code += "\n";
+                }
+                else if (arr[i].name == "for")
+                {
+                    code += tab + "for ";
+                    i += 3;
+                    code += arr[i].name + " in range(";
+                    i += 2;
+                    code += arr[i] + ", ";
+                    i += 4;
+                    code += arr[i] + "):\n";
+                    while (arr[i].name != ")")
+                    {
+                        i++;
+                    }
+                }
+                else
+                {
+                    code += arr[i].name + " ";
+                }
+            }
+
+
+            return code;
+
+        }
+
         static void Main(string[] args)
         {
             Console.WriteLine("Program start\n");
@@ -993,25 +1148,37 @@ namespace SpoV2
             LexicalAnalyzer la = new LexicalAnalyzer();
             SyntaxAnalyzer sa;
             SemanticAnalyzer semA;
+            CodeGenerator cg;
+
             String codeText = la.GetCode();
             
+
             if (!la.CheckBrackets(codeText))
             {
                 Console.WriteLine("Brackets error");
             }
-            la.GetTokens(codeText); //получение списка токенов
 
-            sa = new SyntaxAnalyzer(la.tokenList);
-            semA = new SemanticAnalyzer(la.tokenList);
+            la.GetTokens(codeText); //получение списка токенов
+            LinkedList<Token> tlist = la.tokenList;
+
+            sa = new SyntaxAnalyzer(tlist);
+            semA = new SemanticAnalyzer(tlist);
+            
+
             semA.StartAnalize(); //получения таблицы переменных
-            
-            
+
+            cg = new CodeGenerator(tlist, semA.variables);
+
+
             Console.Write(sa.RecursiveTree(-1,"-")); //получение и вывод синтаксического дерева
 
-            LinkedList<Token> tlist = la.tokenList;            
+                     
             la.PrintList(tlist); //вывод таблицы токенов
             semA.PrintVariableList(); // вывод таблицы переменных
-            semA.PrintErrors();
+            semA.PrintErrors(); //вывод ошибок
+
+            Console.WriteLine(GenerateCode(tlist)); // вывод сгенерируемого кода
+
             Console.WriteLine("Program end\n");
         }
     }
