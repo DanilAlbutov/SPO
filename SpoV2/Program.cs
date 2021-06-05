@@ -761,7 +761,6 @@ namespace SpoV2
         public String AnalyzeAssign(Token[] arr, int i)
         {
             String res = "";
-            int argsCount = 0;
             bool isContainsOperators = IsContainsOperators(arr, i);
             //int j = i;
             if (!isContainsOperators)
@@ -779,6 +778,8 @@ namespace SpoV2
                 tree.FillTree();
                 
                 res += RecursivePrintTree(tree.NodeArr, 0);
+                ToDownBranchTab();
+                ToDownBranchTab();
 
             }
             return res;
@@ -787,7 +788,6 @@ namespace SpoV2
         public String AnalyzeConditions(Token[] arr, int i)
         {
             String res = "";
-            int argsCount = 0;
             bool isContainsOperators = IsContainsOperators(arr, i);
             //int j = i;
             if (!isContainsOperators)
@@ -843,6 +843,7 @@ namespace SpoV2
                     output += branchTab + "\\__[=]\n";
                     ToUpBranchTab();
                     output += AnalyzeAssign(tokensArray, i);
+                    //ToDownBranchTab(); //----Edited
                 }
                 else if (tokensArray[i].name == "for")
                 {
@@ -870,6 +871,7 @@ namespace SpoV2
                     output += branchTab + "\\__[" + tokensArray[i - 1].name + "]\n";
                     ToDownBranchTab();
                 }
+
                 
                 
             }
@@ -990,8 +992,7 @@ namespace SpoV2
 
         public CodeGenerator(LinkedList<Token> t, LinkedList<Variable> v)
         {
-            tokList = t;
-            varList = v;
+            
             this.tokList = t;
             this.varList = v;
         }
@@ -1011,9 +1012,22 @@ namespace SpoV2
 
         }
 
-        public String GenerateCode(LinkedList<Token> tList)
+        public bool IsVarible(Token tok)
         {
-            Token[] arr = tList.ToArray<Token>();
+            List<Variable> list = varList.ToList<Variable>();
+            Variable tempVar = list.Find(item => item.varName == tok.name);
+            if (tempVar.varName != null)
+            {
+                return true;
+            }
+
+                return false;
+        }
+
+        public String GenerateCode()
+        {
+
+            Token[] arr = tokList.ToArray();
             String code = "";
             Variable[] varArr = varList.ToArray<Variable>();
             for (int i = 0; i < arr.Length; i++)
@@ -1030,10 +1044,16 @@ namespace SpoV2
                 else if (arr[i].name == "int")
                 {
                     i++;
-                    code += tab + arr[i] + " ";
+                    code += tab;
+                    while (arr[i].name != ";")
+                    {
+                        code += arr[i].name + " ";
+                        i++;
+                    }
+                    code += "\n";
                 } else if (arr[i].name =="=")
                 {
-                    code += "= ";
+                    //code += "= ";
                     while (arr[i].name != ";")
                     {
                         code += arr[i].name + " ";
@@ -1046,69 +1066,16 @@ namespace SpoV2
                     i += 3;
                     code += arr[i].name + " in range(";
                     i += 2;
-                    code += arr[i] + ", ";
+                    code += arr[i].name + ", ";
                     i += 4;
-                    code += arr[i] + "):\n";
+                    code += arr[i].name + "):\n";
                     while (arr[i].name != ")")
                     {
                         i++;
                     }                    
-                } else {
-                    code += arr[i].name + " ";
-                }
-            }
+                } else if (IsVarible(arr[i])){
 
-
-            return code;
-
-        }
-    
-    }
-
-    class Program
-    {
-        public static String tab = "";
-
-        public static void ToUpBranchTab()
-        {
-            tab += "\t";
-        }
-
-        public static void ToDownBranchTab()
-        {
-            if (tab.Length - 1 >= 0)
-            {
-                tab = tab.Substring(0, tab.Length - 1);
-            }
-
-
-        }
-
-
-        public static String GenerateCode(LinkedList<Token> tList)
-        {
-            Token[] arr = tList.ToArray<Token>();
-            String code = "";
-            //Variable[] varArr = varList.ToArray<Variable>();
-            for (int i = 0; i < arr.Length; i++)
-            {
-                if (arr[i].name == "{")
-                {
-                    ToUpBranchTab();
-                }
-                else
-                if (arr[i].name == "}")
-                {
-                    ToDownBranchTab();
-                }
-                else if (arr[i].name == "int")
-                {
-                    i++;
-                    code += tab + arr[i] + " ";
-                }
-                else if (arr[i].name == "=")
-                {
-                    code += "= ";
+                    code += tab;
                     while (arr[i].name != ";")
                     {
                         code += arr[i].name + " ";
@@ -1116,39 +1083,28 @@ namespace SpoV2
                     }
                     code += "\n";
                 }
-                else if (arr[i].name == "for")
-                {
-                    code += tab + "for ";
-                    i += 3;
-                    code += arr[i].name + " in range(";
-                    i += 2;
-                    code += arr[i] + ", ";
-                    i += 4;
-                    code += arr[i] + "):\n";
-                    while (arr[i].name != ")")
-                    {
-                        i++;
-                    }
-                }
-                else
-                {
-                    code += arr[i].name + " ";
-                }
             }
 
 
             return code;
 
         }
+        
+
+
+    }
+
+    class Program
+    {
 
         static void Main(string[] args)
         {
             Console.WriteLine("Program start\n");
 
             LexicalAnalyzer la = new LexicalAnalyzer();
-            SyntaxAnalyzer sa;
-            SemanticAnalyzer semA;
-            CodeGenerator cg;
+            
+            
+            
 
             String codeText = la.GetCode();
             
@@ -1161,23 +1117,28 @@ namespace SpoV2
             la.GetTokens(codeText); //получение списка токенов
             LinkedList<Token> tlist = la.tokenList;
 
-            sa = new SyntaxAnalyzer(tlist);
-            semA = new SemanticAnalyzer(tlist);
+            SyntaxAnalyzer sa = new SyntaxAnalyzer(tlist);
+
+            SemanticAnalyzer semA = new SemanticAnalyzer(tlist);
             
 
             semA.StartAnalize(); //получения таблицы переменных
 
-            cg = new CodeGenerator(tlist, semA.variables);
+            LinkedList<Token> listCopy = la.tokenList;
+
+            CodeGenerator cg = new CodeGenerator(listCopy, semA.variables);
 
 
             Console.Write(sa.RecursiveTree(-1,"-")); //получение и вывод синтаксического дерева
 
                      
-            la.PrintList(tlist); //вывод таблицы токенов
-            semA.PrintVariableList(); // вывод таблицы переменных
+             //вывод таблицы токенов
+            
             semA.PrintErrors(); //вывод ошибок
 
-            Console.WriteLine(GenerateCode(tlist)); // вывод сгенерируемого кода
+            Console.WriteLine(cg.GenerateCode()); // вывод сгенерируемого кода
+            la.PrintList(tlist);
+            semA.PrintVariableList(); // вывод таблицы переменных
 
             Console.WriteLine("Program end\n");
         }
